@@ -1,6 +1,7 @@
 import React, { createContext, Component } from 'react'
 import { withRouter } from 'react-router'
-import { BeaconWallet } from '@taquito/beacon-wallet'
+import { BeaconWallet, BeaconWalletNotInitialized } from "@taquito/beacon-wallet";
+import { PermissionScope } from '@airgap/beacon-sdk';
 import { TezosToolkit } from '@taquito/taquito'
 import { setItem } from '../utils/storage'
 import { KeyStoreUtils } from 'conseiljs-softsigner'
@@ -16,7 +17,37 @@ export const HicetnuncContext = createContext()
 //const Tezos = new TezosToolkit('https://mainnet-tezos.giganode.io')
 const Tezos = new TezosToolkit('https://mainnet.smartpy.io')
 
-const wallet = new BeaconWallet({
+export class PatchedBeaconWallet extends BeaconWallet {
+  async sendOperations(params) {
+    const account = await this.client.getActiveAccount();
+    if (!account) {
+      throw new BeaconWalletNotInitialized();
+    }
+    const permissions = account.scopes;
+    this.validateRequiredScopesOrFail(permissions, [PermissionScope.OPERATION_REQUEST]);
+
+    const { transactionHash } = await this.client.requestOperation({
+      operationDetails: params.map(op => ({
+        ...modifyFeeAndLimit(op),
+      })),
+    });
+    return transactionHash;
+  }
+}
+
+function modifyFeeAndLimit(op) {
+  const { fee, gas_limit, storage_limit, ...rest } = op;
+  
+  if (op.parameters && op.parameters.entrypoint === "mint") {
+    rest.storage_limit = 420;
+  }
+  if (op.parameters && op.parameters.entrypoint === "swap") {
+    rest.storage_limit = 999;
+  }
+  return rest;
+}
+
+const wallet = new PatchedBeaconWallet({
   name: 'hicetnunc.xyz',
   preferredNetwork: 'mainnet',
 })
