@@ -35,14 +35,30 @@ export const PdfComponent = ({
     setPageNumber(item.pageNumber)
   }
 
+  function removeTextLayerOffset() {
+    const textLayers = document.querySelectorAll(".react-pdf__Page__textContent");
+      textLayers.forEach(layer => {
+        const { style } = layer;
+        style.top = "0";
+        style.left = "0";
+        style.transform = "";
+    });
+  }
+
+  const documentWrapperRef = React.useRef();
+
   return (
-    <div className={styles.container}>
-      <Document
+    <div className={styles.container} ref={documentWrapperRef}>
+      <Document 
         file={preview ? previewUri : artifactUri}
         onLoadSuccess={onDocumentLoadSuccess}
         onItemClick={onItemClick}
       >
-        <Page pageNumber={pageNumber} />
+        <Page 
+          pageNumber={pageNumber} 
+          onLoadSuccess={removeTextLayerOffset}
+          width={documentWrapperRef.current?.getBoundingClientRect().width || undefined}
+        />
         {onDetailView && (
           <div className={styles.pdfNav}>
             <Button disabled={pageNumber <= 1} onClick={previousPage}>
