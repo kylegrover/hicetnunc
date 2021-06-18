@@ -15,6 +15,10 @@ import { Upload } from '../../components/upload'
 
 import { SigningType } from '@airgap/beacon-sdk'
 import { char2Bytes } from '@taquito/utils'
+
+import { Textbox, Radiobox, Checkbox, Select, Textarea } from 'react-inputs-validation';
+import 'react-inputs-validation/lib/react-inputs-validation.min.css';
+
 const { create } = require('ipfs-http-client')
 const infuraUrl = 'https://ipfs.infura.io:5001'
 
@@ -134,7 +138,23 @@ export class Config extends Component {
                 name="subjkt"
                 onChange={this.handleChange}
                 placeholder="SUBJKT"
+                pattern="/^[a-z0-9]+(?:-[a-z0-9]+)*$/"
               ></input>
+              <Textbox
+                attributesInput={{ // Optional.
+                  id: 'Name',
+                  name: 'Name',
+                  type: 'text',
+                  placeholder: 'Display Name (lowercase, no spaces or special chars)',
+                }}
+                placeholder="Display Name (lowercase, no spaces or special chars)"
+                onChange={this.handleChange}
+                onBlur={(e) => {}} // required
+                validationOption={{
+                  reg: /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
+                  regMsg: 'Must be lowercase alpha-numeric, no spaces, no special characters'
+                }}
+              />
               <br />
               <input
                 type="text"
@@ -157,13 +177,13 @@ export class Config extends Component {
 
             <div style={{ paddingTop: '15%' }}>
               <input
-                type="text"
+                type="number"
                 name="vote"
                 onChange={this.handleChange}
                 placeholder="μ○"
               ></input>
               <p style={{ fontSize: '12px' }}>
-                hic et nunc DAO ○ curation parameter
+                hDAO ○ curation amount
               </p>
               <button onClick={this.hDAO_config}>
                 config ○
