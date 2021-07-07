@@ -6,6 +6,7 @@ import classnames from 'classnames'
 import { iOS } from '../../utils/os'
 import { HicetnuncContext } from '../../context/HicetnuncContext'
 import styles from './styles.module.scss'
+import './style.css'
 
 /**
  * Currently fullscreen is disabled on iOS
@@ -90,11 +91,12 @@ export const Container = ({
       style={{
         width: '100%',
       }}
+      className="objktview-container"
     >
       <div ref={domElement} className={classes}>
         {interactive && !iOS && !nofullscreen && (
-          <div onClick={toggleFullScreen} className={styles.icon}>
-            {context.fullscreen ? (
+          <div onClick={toggleFullScreen} className={styles.icon + " svg-icon"}>
+             {context.fullscreen ? (
               <svg viewBox="0 0 14 14">
                 <g
                   fill="none"

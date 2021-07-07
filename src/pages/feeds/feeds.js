@@ -2,6 +2,7 @@
 /* eslint-disable */
 import React, { useEffect, useState } from 'react'
 import InfiniteScroll from 'react-infinite-scroll-component'
+import { BottomBanner } from '../../components/bottom-banner'
 import {
   GetLatestFeed,
   // GethDAOFeed,
@@ -13,10 +14,87 @@ import { FeedItem } from '../../components/feed-item'
 import { Loading } from '../../components/loading'
 
 const axios = require('axios')
+const _ = require('lodash')
 
 const customFloor = function (value, roundTo) {
   return Math.floor(value / roundTo) * roundTo
 }
+
+const latest_feed = `
+query LatestFeed($lastId: bigint = 99999999) {
+  hic_et_nunc_token(order_by: {id: desc}, limit: 50, where: {id: {_lt: $lastId}, artifact_uri: {_neq: ""}}) {
+    artifact_uri
+    display_uri
+    creator_id
+    id
+    mime
+    thumbnail_uri
+    timestamp
+    title
+    creator {
+      name
+      address
+    }
+  }
+}`
+
+const query_hdao = `query hDAOFeed($offset: Int = 0) {
+  hic_et_nunc_token(order_by: {hdao_balance: desc}, limit: 50, where: {hdao_balance: {_gt: 100}}, offset: $offset) {
+    artifact_uri
+    display_uri
+    creator_id
+    id
+    mime
+    thumbnail_uri
+    timestamp
+    title
+    hdao_balance
+    creator {
+      name
+      address
+    }
+  }
+}`
+
+async function fetchHdao(offset) {
+  const { errors, data } = await fetchGraphQL(query_hdao, "hDAOFeed", { "offset": offset });
+  if (errors) {
+    console.error(errors);
+  }
+  const result = data.hic_et_nunc_token
+  /* console.log({ result }) */
+  return result
+}
+
+async function fetchFeed(lastId) {
+  const { errors, data } = await fetchGraphQL(latest_feed, "LatestFeed", { "lastId": lastId });
+  if (errors) {
+    console.error(errors);
+  }
+  const result = data.hic_et_nunc_token
+  /* console.log({ result }) */
+  return result
+}
+
+
+async function fetchGraphQL(operationsDoc, operationName, variables) {
+  let result = await fetch('https://api.hicdex.com/v1/graphql', {
+    method: 'POST',
+    body: JSON.stringify({
+      query: operationsDoc,
+      variables: variables,
+      operationName: operationName,
+    }),
+  })
+  return await result.json()
+}
+
+const getRestrictedAddresses = async () =>
+  await axios
+    .get(
+      'https://raw.githubusercontent.com/hicetnunc2000/hicetnunc/main/filters/w.json'
+    )
+    .then((res) => res.data)
 
 const ONE_MINUTE_MILLIS = 60 * 1000
 
@@ -27,15 +105,16 @@ export const Feeds = ({ type }) => {
   const [lastId, setId] = useState(999999)
   const [offset, setOffset] = useState(0)
   const [hasMore, setHasMore] = useState(true)
+  const [creators, setCreators] = useState([])
   const startTime = customFloor(Date.now(), ONE_MINUTE_MILLIS)
 
   const loadMore = async () => {
-    console.log(type)
+
     if (type === 1) {
       await getHdaoFeed()
     }
     if (type === 2) await getRandomFeed()
-    if (type === 3) getLatest(Math.min.apply(Math, items.map(e => e.id)))
+    if (type === 3) await getLatest(Math.min.apply(Math, items.map(e => e.id)))
   }
 
   useEffect(async () => {
@@ -63,13 +142,7 @@ export const Feeds = ({ type }) => {
     } else if (type === 2) {
       await getRandomFeed()
     } else if (type === 3) {
-      let result = await axios
-        .post(process.env.REACT_APP_GRAPHQL_FEED, { lastId: lastId })
-        .then((res) => res.data)
-      console.log(result)
-      setId(Math.min.apply(Math, result.map((e) => e.id)))
-      const next = result.concat(result)
-      setItems(next)
+      await getLatest(lastId)
 
       /*       GetFeaturedFeed({ counter: count, max_time: startTime })
         .then((result) => {
@@ -90,20 +163,23 @@ export const Feeds = ({ type }) => {
 
   const getLatest = async (id) => {
     console.log(id)
-    let result = await axios
-      .post(process.env.REACT_APP_GRAPHQL_FEED, { lastId: id })
-      .then((res) => res.data)
+    let result = await fetchFeed(id)
+
+    setCreators([...creators, result.map(e => e.creator_id)])
+
+    result = _.uniqBy(result, 'creator_id')
+    setCreators(creators.concat(result.map(e => e.creator_id)))
+    result = result.filter(e => !creators.includes(e.creator_id))
+    
+    let restricted = await getRestrictedAddresses()
+    result = result.filter(e => !restricted.includes(e.creator_id))
     const next = items.concat(result)
     setItems(next)
-    if (result.length < 10) {
-      setHasMore(false)
-    }
+
   }
 
   const getHdaoFeed = async () => {
-    let result = await axios
-      .post(process.env.REACT_APP_GRAPHQL_HDAO, { offset: offset })
-      .then((res) => res.data)
+    let result = await fetchHdao(offset)
     setOffset(offset + 50)
     const next = items.concat(result)
     setItems(next)
@@ -148,6 +224,9 @@ export const Feeds = ({ type }) => {
           </Padding>
         </Container>
       </InfiniteScroll>
+{/*       <BottomBanner>
+        Collecting has been temporarily disabled. Follow <a href="https://twitter.com/hicetnunc2000" target="_blank">@hicetnunc2000</a> or <a href="https://discord.gg/jKNy6PynPK" target="_blank">join the discord</a> for updates.
+      </BottomBanner> */}
     </Page>
   )
 }
