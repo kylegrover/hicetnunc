@@ -34,13 +34,13 @@ export const ItemInfo = ({
     total = supply
     let ed =
       token_holders.filter(
-        (e) => e.holder_id === 'KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9'
+        (e) => e.holder_id === 'KT1HbQepzV1nVGg8QVznG7z4RcHseD5kwqBn'
       ).length > 0
         ? token_holders.filter(
-            (e) => e.holder_id === 'KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9'
-          )[0].quantity
+          (e) => e.holder_id === 'KT1HbQepzV1nVGg8QVznG7z4RcHseD5kwqBn'
+        )[0].quantity
         : 'X'
-
+    swaps = swaps.filter(e => parseInt(e.contract_version) === 2 && parseInt(e.status) === 0)
     let s = _.minBy(swaps, (o) => Number(o.price))
     let maxPrice = _.maxBy(swaps, (o) => Number(o.price))
 
@@ -59,7 +59,7 @@ export const ItemInfo = ({
       if (acc == null) {
         syncTaquito()
       } else {
-        collect(1, s.id, s.price * 1)
+        collect(s.id, s.price * 1)
       }
     }
 
@@ -87,9 +87,9 @@ export const ItemInfo = ({
         </Button>
       )
     }
-
     return (
       <>
+        <div style={{ height: '30px' }}></div>
         <div className={styles.container}>
           <div className={styles.edition}>
             <div className={styles.inline}>
@@ -129,7 +129,7 @@ export const ItemInfo = ({
 
         {isDetailView && (
           <div className={styles.spread}>
-            <p>OBJKT#{id}</p>
+            <p style={{ paddingBottom: '7.5px' }}>OBJKT#{id}</p>
             <Button onClick={() => handleCollect()}>
               <Purchase>{message}</Purchase>
             </Button>
@@ -155,8 +155,16 @@ export const ItemInfo = ({
       <div className={styles.container}>
         <div className={styles.edition}>
           <div className={styles.inline}>
-            <Button to={`${PATH.ISSUER}/${creator_id}`}>
-              <Primary>{walletPreview(creator_id)}</Primary>
+            <Button
+              to={
+                creator.name ? `/${creator.name}` : `/tz/${creator.address}`
+              }
+            >
+              {creator.name ? (
+                <Primary>{creator.name}</Primary>
+              ) : (
+                <Primary>{walletPreview(creator.address)}</Primary>
+              )}
             </Button>
           </div>
           <div className={styles.objktContainer}>

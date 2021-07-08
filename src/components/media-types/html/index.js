@@ -9,6 +9,7 @@ import {
 } from '../../../utils/html'
 import { VisuallyHidden } from '../../visually-hidden'
 import styles from './styles.module.scss'
+// import './styles.css'
 
 const uid = Math.round(Math.random() * 100000000).toString()
 
@@ -18,9 +19,10 @@ export const HTMLComponent = (props) => {
     displayUri,
     previewUri,
     creator,
-    id,
+    objkt,
     onDetailView,
     preview,
+    displayView
   } = props
   const context = useContext(HicetnuncContext)
 
@@ -36,8 +38,8 @@ export const HTMLComponent = (props) => {
     _viewer_ = context.address.address
   }
 
-  if (id) {
-    _objectId_ = String(id)
+  if (objkt) {
+    _objectId_ = String(objkt)
   }
 
   // preview
@@ -46,6 +48,7 @@ export const HTMLComponent = (props) => {
   const unpacking = useRef(false)
   const [validHTML, setValidHTML] = useState(null)
   const [validationError, setValidationError] = useState(null)
+  const [contentRef, setContentRef] = useState(null)
 
   const unpackZipFiles = async () => {
     unpacking.current = true
@@ -123,6 +126,8 @@ export const HTMLComponent = (props) => {
     }
   }
 
+
+  console.log(onDetailView)
   if (!onDetailView) {
     return (
       <div className={classes}>
@@ -162,15 +167,31 @@ export const HTMLComponent = (props) => {
     )
   }
 
-  console.log('HTML')
-  return (
-    <div className={classes}>
-      <iframe
-        title="html-embed"
-        src={`${artifactUri}?creator=${_creator_}&viewer=${_viewer_}&objkt=${_objectId_}`}
-        sandbox="allow-scripts allow-same-origin"
-        allow="accelerometer; camera; gyroscope; microphone; xr-spatial-tracking;"
-      />
-    </div>
-  )
+  if (!displayView) {
+    return (
+      <div>
+        <iframe
+          className={styles.html + ' zip-embed'}
+          title="html-embed"
+          src={`${artifactUri}/?creator=${_creator_}&viewer=${_viewer_}&objkt=${_objectId_}`}
+          sandbox="allow-scripts allow-same-origin"
+          allow="accelerometer; camera; gyroscope; microphone; xr-spatial-tracking;"
+
+        />
+      </div>
+    )
+  } else {
+
+    return (
+      <div>
+        <iframe
+          className={styles.html}
+          title="html-embed"
+          src={`${artifactUri}/?creator=${_creator_}&viewer=${_viewer_}&objkt=${_objectId_}`}
+          sandbox="allow-scripts allow-same-origin"
+          allow="accelerometer; camera; gyroscope; microphone; xr-spatial-tracking;"
+        />
+      </div>
+    )
+  }
 }
