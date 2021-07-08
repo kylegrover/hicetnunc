@@ -23,18 +23,16 @@ export class Search extends Component {
   }
 
   search = async () => {
-
     // search for alias
     // 
-    if (this.state.search.length < 3) {
+    if (this.state.search.replaceAll('%','').length < 3) {
       alert('too short - search must be at least 3 characters')
       return;
     }
 
     if (this.state.queried == false) this.setState({queried:true})
 
-    let subjkt_results = this.searchSubjkt(this.state.search)
-
+    let subjkt_results = this.state.search == ''?'':this.searchSubjkt(this.state.search)
 
     console.log(this.state.search)
 
@@ -43,10 +41,14 @@ export class Search extends Component {
   searchSubjkt = async (search_query) => {
     const query = `
       query SearchSubjkt($search_query: String) {
-        hic_et_nunc_holder(where: {name: {_ilike: $search_query}}, limit: 30) {
+        hic_et_nunc_holder(where: {name: {_ilike: "%${search_query}%"}}, limit: 30) {
           name
           address
           metadata
+          tokens(limit: 1, order_by: {id: desc}) {
+            id
+            extra
+          }
         }
       }
     `;
@@ -86,6 +88,7 @@ export class Search extends Component {
               type="text"
               name="search"
               onChange={this.handleChange}
+              onBlur={this.handleChange}
               placeholder="search">
             </input>
             <button onClick={this.search}>x</button>
@@ -99,8 +102,12 @@ export class Search extends Component {
               this.state.queried && (
                 this.state.results.length > 0 ? 
                 this.state.results.map(result => {
+                  // let imgpath = ''
+                  // if (result.tokens[0].extra.display_uris.length >= 4)
+                  //   imgpath = "https://ipfs.io/ipfs/"+result.tokens[0].extra.display_uris[3].path
                   return <div className="searchResult">
-                    {result.name} - {result.address} - {result.metadata.description}
+                    {/* <img src={imgpath} width="64" height="64"></img> */}
+                    <a href={result.address}>{result.name}</a> - {result.metadata.description}
                   </div>
                 }) : "No results"
               )
