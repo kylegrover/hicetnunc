@@ -173,6 +173,15 @@ export const ItemInfo = ({
             </Primary>
           </Button>
           &nbsp;
+          <a href={`https://docs.google.com/forms/d/e/1FAIpQLSf8jaKpqukdLarsm8Ai1xKf9H1nlJQZopbTc5UPXWrvkJtoBA/viewform?usp=pp_url&entry.73971236=${creator.address}&entry.567593262=${id}`} target="_blank" rel="noreferrer">
+            <span
+              className={styles.top}
+              data-position={'top'}
+              data-tooltip={'report'}
+            >
+              ⚐
+            </span>
+          </a>
           {
             mime.includes('image') && (
               <>
